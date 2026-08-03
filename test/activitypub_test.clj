@@ -3,7 +3,7 @@
             [clojure.java.shell :as shell]
             [clojure.test :refer [deftest is testing]]
             [kotoba.compiler.core :as compiler]
-            [kotoba.compiler.ir :as ir]))
+            [kotoba.kir :as ir]))
 
 (def source (slurp "src/activitypub.kotoba"))
 (defn call [kir function & args] (ir/execute kir function (vec args)))
@@ -15,9 +15,9 @@
 (defn dvec [& values] ["vector" (vec values)])
 (defn dmap [entries]
   ["map" (->> entries (sort-by (comp str key))
-              (mapv (fn [[key value]] [key value])))])
+              (mapv (fn [[key value]] [(dkw key) value])))])
 (defn dget [document key]
-  (some (fn [[candidate value]] (when (= candidate key) value)) (second document)))
+  (some (fn [[candidate value]] (when (= candidate (dkw key)) value)) (second document)))
 (defn error-codes [document]
   (mapv #(second (dget % :error)) (second document)))
 
@@ -106,9 +106,9 @@
           (str "import(process.argv[1]).then(async host=>{"
                "const j=await import('data:text/javascript;base64," js64 "');"
                "const w=await host.instantiateKotoba(Buffer.from(process.argv[2],'base64'));"
-               "const run=(x,doc)=>{const map=e=>doc(['map',e.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0)]);"
+               "const run=(x,doc)=>{const map=e=>doc(['map',e.map(([k,v])=>[['keyword',k],v]).sort((a,b)=>a[0][1]<b[0][1]?-1:a[0][1]>b[0][1]?1:0)]);"
                "const base='https://example.test/users/alice';const ep=x.endpoints(base);"
-               "const get=(d,k)=>d[1].find(e=>e[0]===k)?.[1];"
+               "const get=(d,k)=>d[1].find(e=>e[0][0]==='keyword'&&e[0][1]===k)?.[1];"
                "const opts=map([[':id',['string',base]],[':inbox',get(ep,':inbox')],[':outbox',get(ep,':outbox')],[':preferred-username',['string','alice']]]);"
                "const a=x.actor(opts);if(get(a,':type')[1]!=='Person'||get(a,':preferredUsername')[1]!=='alice')throw Error('actor');"
                "const item=map([[':id',['string','urn:activity:1']]]);const c=x['ordered-collection'](map([[':id',['string',base+'/outbox']],[':total-items',['i64',1n]],[':items',doc(['vector',[item]])]]));"
