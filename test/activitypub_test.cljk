@@ -1,5 +1,5 @@
 (ns activitypub-test
-  (:require [kotoba.bytes :as kbytes] [clojure.java.io :as io]
+  (:require [kotoba.lang.error :as kerror] [kotoba.bytes :as kbytes] [clojure.java.io :as io]
             [kotoba.process :as shell]
             [kotoba.test :refer [deftest is testing]]
             [kotoba.compiler.core :as compiler]
@@ -86,8 +86,8 @@
         (is (= [:activitypub/document-must-be-map]
                (error-codes (call kir 'errors (dvec)))))))
     (testing "constructor boundaries reject malformed documents"
-      (is (thrown? clojure.lang.ExceptionInfo (call kir 'actor (dvec))))
-      (is (thrown? clojure.lang.ExceptionInfo
+      (is (thrown? kerror/ExceptionInfo (call kir 'actor (dvec))))
+      (is (thrown? kerror/ExceptionInfo
                    (call kir 'collection (dmap {:items (dstr "not-a-vector")})))))))
 
 (defn compiler-root []
